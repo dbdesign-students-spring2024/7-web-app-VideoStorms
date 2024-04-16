@@ -1,31 +1,28 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Welcome to the Rares' MARKETPLACE FOR GOODS AND SERVICES!</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/style.css') }}"
-    />
-  </head>
-  <body>
+<head>
+    <title>Rares' Marketplace</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
     <div class="container">
-      <header>
-        <h1>Welcome to the Rares' MARKETPLACE FOR GOODS AND SERVICES!</h1>
-        <p>
-          <a href="{{ url_for('home')}}">Home</a> |
-          <a href="{{ url_for('read')}}">All listings</a> |
-          <a href="{{ url_for('create')}}">Create a listing</a> |
-          <a href="{{ url_for('register')}}">Register!</a> |
-          <a href="{{ url_for('login')}}">Log-in!</a> |
-          <a href="/logout">Log-out</a>
-        </p>
-      </header>
-      <main>{% block container %} {% endblock %}</main>
-      <footer>
-        <p>
-          Please buy and sell any goods or services you like!
-        </p>
-      </footer>
+        <header>
+            <h1>Rares' Marketplace</h1>
+            <nav>
+                <a href="{{ url_for('home')}}">Home</a> |
+                <a href="{{ url_for('read')}}">All listings</a> |
+                <a href="{{ url_for('create')}}">Create a listing</a> |
+                <a href="{{ url_for('register')}}">Register</a> |
+                <a href="{{ url_for('login')}}">Login</a> |
+                <a href="/logout">Logout</a>
+            </nav>
+        </header>
+        <main>
+            {% block container %}{% endblock %}
+        </main>
+        <footer>
+            <p>Please buy and sell any goods or services you like!</p>
+        </footer>
     </div>
-  </body>
+</body>
 </html>

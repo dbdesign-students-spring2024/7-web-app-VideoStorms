@@ -1,24 +1,26 @@
 {% extends 'base.html' %}
 
 {% block container %}
-<h2>Read</h2>
-<p>This page shows all currently available listings.
-        
-    {% for doc in docs %}
-    <div>
-        <hr class="solid">
-        <p class="post">
-            Posted by {{doc.name}} at {{ doc.created_at.strftime("%H:%M on %d %B %Y") }}
-            <br/>
-            <a href="{{ url_for('edit',mongoid=doc._id)}}">Edit</a> | <a href="{{ url_for('delete',mongoid=doc._id)}}">Delete</a>
-            <br/>
-        </p>
-        <h3>{{ doc.item }}</h3>
-        <p>
-            {{ doc.message }}
-        </p>
-            
-    </div>
-    {%endfor%}
-</p>
+<h2>This page shows all currently available listings.</h2>
+
+{% for doc in docs %}
+<div>
+    <hr class="solid">
+    <p class="post">
+        Posted by {{ doc.name }} at {{ doc.created_at.strftime("%H:%M on %d %B %Y") }}
+        <br/>
+        <a href="{{ url_for('edit', mongoid=doc._id) }}">Edit</a> | <a href="{{ url_for('delete', mongoid=doc._id) }}">Delete</a>
+        <br/>
+    </p>
+    <h3>{{ doc.item }}</h3>
+    <p>
+        {{ doc.message }}
+    </p>
+    <!-- Check if there is a photo URL and display the image if it exists -->
+    {% if doc.photo_url %}
+    <img src="{{ doc.photo_url }}" alt="Uploaded image" style="max-width: 100%; height: auto;">
+    {% endif %}
+</div>
+{% endfor %}
+
 {% endblock %}

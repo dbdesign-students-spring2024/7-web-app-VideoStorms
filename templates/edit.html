@@ -1,14 +1,24 @@
-{% extends 'base.html' %} {% block container %}
+{% extends 'base.html' %}
+
+{% block container %}
 <h2>Update</h2>
 <p>Edit a listing.</p>
-<form method="POST" action="{{ url_for('edit_post', mongoid=mongoid) }}">
+<form method="POST" action="{{ url_for('edit', mongoid=mongoid) }}" enctype="multipart/form-data">
   <p>
     Item:
-    <input type="item" id="item" name="item" value="{{doc.name}}" /><br />
+    <input type="text" id="item" name="item" value="{{ doc.item }}" required/><br />
   </p>
   <p>
     Description:
-    <textarea id="fmessage" name="fmessage">{{doc.message}}</textarea>
+    <textarea id="fmessage" name="fmessage" required>{{ doc.message }}</textarea>
+  </p>
+  <p>
+    Current Photo:
+    {% if doc.photo_url %}
+      <img src="{{ doc.photo_url }}" alt="Uploaded photo" style="max-width: 200px; max-height: 200px;"><br>
+    {% endif %}
+    Change Photo:
+    <input type="file" id="photo" name="photo" accept="image/png, image/jpeg"><br>
   </p>
   <p>
     <a href="{{ url_for('read')}}">Cancel</a>

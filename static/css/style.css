@@ -1,25 +1,66 @@
-.container {
-  border: 2px solid;
-  width: 50%;
-  margin: 0 auto;
+/* General body styling */
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #f4f4f4;
+  color: #333;
+  line-height: 1.6;
 }
 
-header,
-footer,
+/* Container adjustments */
+.container {
+  border: none; /* Remove harsh border */
+  width: 80%; /* Increase width for better usage of space */
+  margin: 20px auto; /* More margin for breathing space */
+  box-shadow: 0 0 10px rgba(0,0,0,0.1); /* Soft shadow for depth */
+  background: #fff; /* Background color for contrast */
+  padding: 20px; /* Padding around the inside edges */
+}
+
+/* Header and footer enhancements */
+header, footer {
+  background: #007BFF; /* A vibrant header and footer background color */
+  color: #ffffff;
+  padding: 20px;
+  text-align: center; /* Center-aligning text for better focus */
+}
+
+/* Main content area adjustments */
 main {
   padding: 20px;
+  margin-bottom: 20px; /* Add more space between sections */
 }
 
-header,
-main {
-  border-bottom: 2px solid;
-  margin-bottom: 5px;
+/* Paragraph adjustments */
+p, footer p {
+  font-size: 1rem; /* More readable font size */
+  color: #666; /* Softer color for less strain */
+  line-height: 1.8; /* Improved line spacing */
 }
 
-p.post {
-  font-size: 12px;
+/* Link styling */
+a {
+  color: #007BFF;
+  text-decoration: none; /* No underline for a cleaner look */
 }
 
+a:hover, a:active {
+  color: #0056b3; /* Darker shade on hover for interaction feedback */
+}
+
+/* Navigation styling */
+nav a {
+  margin-right: 10px; /* Space out navigation links */
+  padding: 8px 16px; /* Padding for easier clickability */
+  background-color: #e7e7e7; /* Slight background for distinction */
+  border-radius: 5px; /* Rounded corners for modern feel */
+}
+
+nav a:hover {
+  background-color: #d6d6d6; /* Light change on hover */
+}
+
+/* Footer specific styling */
 footer {
-  margin-bottom: 5px;
+  font-size: 0.8rem;
+  border-top: 1px solid #ccc; /* Subtle separation from content */
 }

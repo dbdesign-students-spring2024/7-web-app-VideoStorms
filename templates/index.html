@@ -1,11 +1,14 @@
 {% extends 'base.html' %}
 
 {% block container %}
-<h2>Welcome!</h2>
-<p>Welcome to the Rares' MARKETPLACE FOR GOODS AND SERVICES!. This is the home page. Here are a few links to example pages you might find interesting.
-    <ul>
-        <li><a href="{{ url_for('read')}}">a page that displays all current available listings</a></li>
-        <li><a href="{{ url_for('create')}}">a page where you can create a new listing</a></li>
-    </ul>
-</p>
+<section>
+    <h2>Welcome!</h2>
+    <p>Welcome to Rares' Marketplace for Goods and Services! This is the home page. Below are links to some pages you might find interesting:</p>
+    <nav>
+        <ul>
+            <li><a href="{{ url_for('read')}}">View all current available listings</a></li>
+            <li><a href="{{ url_for('create')}}">Create a new listing</a></li>
+        </ul>
+    </nav>
+</section>
 {% endblock %}

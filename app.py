@@ -7,6 +7,10 @@ from flask import session
 
 from flask import Flask, render_template, request, redirect, url_for, make_response
 
+from werkzeug.utils import secure_filename
+
+
+
 # import logging
 import sentry_sdk
 from sentry_sdk.integrations.flask import (
@@ -65,6 +69,21 @@ except ConnectionFailure as e:
 
 # set up the routes
 
+app.config['UPLOAD_FOLDER'] = 'static/uploads/'
+
+app.config['UPLOAD_FOLDER'] = 'static/uploads/'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# Ensure the upload folder exists
+def ensure_directory(directory):
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+# Call this function with your upload path at the start of your application
+ensure_directory(app.config['UPLOAD_FOLDER'])
 
 @app.route("/")
 def home():
@@ -102,8 +121,24 @@ def create_post():
     item = request.form['item']
     message = request.form["fmessage"]
     user_id = session['user_id']
+    photo = request.files['photo']
 
-    doc = {"name": name, "item" : item,  "message": message, "created_at": datetime.datetime.utcnow(), "user_id": ObjectId(user_id)}
+    if photo and allowed_file(photo.filename):
+        filename = secure_filename(photo.filename)
+        photo_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        photo.save(photo_path)
+        photo_url = url_for('static', filename='uploads/' + filename)
+    else:
+        photo_url = None
+
+    doc = {
+        "name": name,
+        "item": item,
+        "message": message,
+        "photo_url": photo_url,
+        "created_at": datetime.datetime.utcnow(),
+        "user_id": ObjectId(user_id)
+    }
     db.exampleapp.insert_one(doc)
     return redirect(url_for("read"))
 
@@ -113,7 +148,7 @@ def edit(mongoid):
     if 'username' not in session:
         return redirect(url_for('login'))
 
-    # Setting the criteria based on user's role
+    # Determine criteria based on user's role
     if session.get('is_admin', False):
         criteria = {"_id": ObjectId(mongoid)}  # Admin can edit any document
     else:
@@ -129,11 +164,41 @@ def edit(mongoid):
     if request.method == 'POST':
         item = request.form["item"]
         message = request.form["fmessage"]
-        # Update the document
-        db.exampleapp.update_one(
-            {"_id": ObjectId(mongoid)},
-            {"$set": {"item": item, "message": message, "created_at": datetime.datetime.utcnow()}}
-        )
+        photo = request.files['photo']
+        old_photo_url = doc.get('photo_url')
+
+        # Check if a new photo has been uploaded
+        if photo and allowed_file(photo.filename):
+            filename = secure_filename(photo.filename)
+            photo_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            photo.save(photo_path)
+            new_photo_url = url_for('static', filename='uploads/' + filename)
+
+            # Replace the old photo with the new photo, if a new one was uploaded
+            if old_photo_url and old_photo_url != new_photo_url:
+                old_photo_path = os.path.join(app.root_path, old_photo_url[1:])  # Correct path construction
+                if os.path.exists(old_photo_path):
+                    try:
+                        os.remove(old_photo_path)  # Delete the old file
+                        app.logger.info(f"Successfully deleted old photo: {old_photo_path}")
+                    except Exception as e:
+                        app.logger.error(f"Failed to delete old photo: {old_photo_path}. Error: {e}")
+                else:
+                    app.logger.warning(f"Tried to delete non-existent file: {old_photo_path}")
+
+            photo_url = new_photo_url
+        else:
+            photo_url = old_photo_url  # No new photo uploaded, keep the old URL
+
+        # Update the document in the database
+        update_data = {
+            "item": item,
+            "message": message,
+            "photo_url": photo_url,
+            "created_at": datetime.datetime.utcnow()
+        }
+        db.exampleapp.update_one({"_id": ObjectId(mongoid)}, {"$set": update_data})
+        
         return redirect(url_for("read"))
 
     # If it's a GET request, render the edit page with the document's data
@@ -167,22 +232,40 @@ def edit_post(mongoid):
     )  # tell the browser to make a request for the /read route
 
 
+import logging
+
 @app.route("/delete/<mongoid>")
 def delete(mongoid):
     if 'username' not in session:
         return redirect(url_for('login'))
 
-    # If the user is not an admin and not the owner of the document, deny access
-    if not session.get('is_admin', False):
+    if session.get('is_admin', False):
+        criteria = {"_id": ObjectId(mongoid)}
+    else:
         user_id = session['user_id']
         criteria = {"_id": ObjectId(mongoid), "user_id": ObjectId(user_id)}
-    else:
-        criteria = {"_id": ObjectId(mongoid)}
+
+    doc = db.exampleapp.find_one(criteria)
+    if not doc:
+        return "Unauthorized", 403
+
+    if doc.get('photo_url'):
+        try:
+            photo_path = os.path.join(app.root_path, doc['photo_url'][1:])
+            if os.path.exists(photo_path):
+                os.remove(photo_path)
+            else:
+                logging.error(f"Photo file not found: {photo_path}")
+        except Exception as e:
+            logging.error(f"Error deleting photo: {e}")
 
     result = db.exampleapp.delete_one(criteria)
     if result.deleted_count == 0:
-        return "Unauthorized", 403  # If no document is deleted, the access was unauthorized
+        return "Unauthorized", 403
+
     return redirect(url_for("read"))
+
+
 
 
 @app.route("/webhook", methods=["POST"])
