@@ -111,25 +111,30 @@ def edit(mongoid):
     if 'username' not in session:
         return redirect(url_for('login'))
 
-    # Find the document either if the user is an admin or is the owner of the document
-    criteria = {"_id": ObjectId(mongoid)}
-    if not session.get('is_admin'):
-        criteria["user_id"] = ObjectId(session['user_id'])
+    # Setting the criteria based on user's role
+    if session.get('is_admin', False):
+        criteria = {"_id": ObjectId(mongoid)}  # Admin can edit any document
+    else:
+        criteria = {
+            "_id": ObjectId(mongoid),
+            "user_id": ObjectId(session['user_id'])  # Non-admins can only edit their own documents
+        }
 
     doc = db.exampleapp.find_one(criteria)
     if doc is None:
-        return "Unauthorized", 403  # Or handle another way
+        return "Unauthorized", 403  # If no document is found, access is unauthorized
 
     if request.method == 'POST':
         name = request.form["fname"]
         message = request.form["fmessage"]
-
+        # Update the document
         db.exampleapp.update_one(
             {"_id": ObjectId(mongoid)},
             {"$set": {"name": name, "message": message, "created_at": datetime.datetime.utcnow()}}
         )
         return redirect(url_for("read"))
 
+    # If it's a GET request, render the edit page with the document's data
     return render_template("edit.html", mongoid=mongoid, doc=doc)
 
 
@@ -165,13 +170,16 @@ def delete(mongoid):
     if 'username' not in session:
         return redirect(url_for('login'))
 
-    criteria = {"_id": ObjectId(mongoid)}
-    if not session.get('is_admin'):
-        criteria["user_id"] = ObjectId(session['user_id'])
+    # If the user is not an admin and not the owner of the document, deny access
+    if not session.get('is_admin', False):
+        user_id = session['user_id']
+        criteria = {"_id": ObjectId(mongoid), "user_id": ObjectId(user_id)}
+    else:
+        criteria = {"_id": ObjectId(mongoid)}
 
     result = db.exampleapp.delete_one(criteria)
     if result.deleted_count == 0:
-        return "Unauthorized", 403
+        return "Unauthorized", 403  # If no document is deleted, the access was unauthorized
     return redirect(url_for("read"))
 
 
@@ -235,6 +243,7 @@ def login():
         if user and bcrypt.check_password_hash(user['password'], password):
             session['username'] = username
             session['user_id'] = str(user['_id'])  # Store user ID from MongoDB in session
+            session['is_admin'] = user.get('is_admin', False)  # Set is_admin in session
             return redirect(url_for('home'))
         else:
             return 'Invalid username or password'
