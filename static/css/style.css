@@ -1,66 +1,164 @@
 /* General body styling */
 body {
-  font-family: 'Arial', sans-serif;
-  background-color: #f4f4f4;
-  color: #333;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Modern and clean font */
+  background-color: #FAFAFA; /* Lighter background for a fresher look */
+  color: #424242; /* Soft black for better readability */
   line-height: 1.6;
+  margin: 0; /* Reset default margin */
+  padding: 0; /* Reset default padding */
+  transition: background-color 0.3s; /* Smooth background color transition */
 }
 
 /* Container adjustments */
 .container {
-  border: none; /* Remove harsh border */
-  width: 80%; /* Increase width for better usage of space */
-  margin: 20px auto; /* More margin for breathing space */
-  box-shadow: 0 0 10px rgba(0,0,0,0.1); /* Soft shadow for depth */
-  background: #fff; /* Background color for contrast */
-  padding: 20px; /* Padding around the inside edges */
+  width: 90%; /* Fluid width for better responsiveness */
+  max-width: 1200px; /* Maximum width to maintain layout integrity */
+  margin: 40px auto; /* More vertical and horizontal margin */
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05); /* Subtle shadow for soft depth */
+  background: #ffffff; /* Crisp white background for contrast */
+  padding: 30px; /* Increased padding for better content breathing space */
+  border-radius: 8px; /* Rounded corners for a modern feel */
 }
 
 /* Header and footer enhancements */
 header, footer {
-  background: #007BFF; /* A vibrant header and footer background color */
+  background: #6C63FF; /* Less intense blue for a pleasing aesthetic */
   color: #ffffff;
   padding: 20px;
-  text-align: center; /* Center-aligning text for better focus */
+  text-align: center;
 }
 
 /* Main content area adjustments */
 main {
   padding: 20px;
-  margin-bottom: 20px; /* Add more space between sections */
+  margin-bottom: 30px; /* Increased space between sections */
 }
 
 /* Paragraph adjustments */
 p, footer p {
-  font-size: 1rem; /* More readable font size */
-  color: #666; /* Softer color for less strain */
-  line-height: 1.8; /* Improved line spacing */
+  font-size: 1.05rem; /* Slightly larger font size for readability */
+  color: #000000; /* Dark gray for easier reading */
+  line-height: 1.8;
 }
 
 /* Link styling */
 a {
-  color: #007BFF;
-  text-decoration: none; /* No underline for a cleaner look */
+  color: #6C63FF; /* Harmonize link color with the theme */
+  text-decoration: none;
 }
 
 a:hover, a:active {
-  color: #0056b3; /* Darker shade on hover for interaction feedback */
+  color: #5548c8; /* Darker shade on hover for better feedback */
+  transition: color 0.2s; /* Smooth color transition */
 }
 
 /* Navigation styling */
 nav a {
-  margin-right: 10px; /* Space out navigation links */
-  padding: 8px 16px; /* Padding for easier clickability */
-  background-color: #e7e7e7; /* Slight background for distinction */
-  border-radius: 5px; /* Rounded corners for modern feel */
+  margin-right: 10px;
+  padding: 10px 18px;
+  background-color: #EDEDED; /* Light gray for subtle distinction */
+  border-radius: 5px;
+  transition: background-color 0.2s; /* Smooth background transition */
 }
 
 nav a:hover {
-  background-color: #d6d6d6; /* Light change on hover */
+  background-color: #DDD; /* Slightly darker on hover */
 }
 
 /* Footer specific styling */
 footer {
-  font-size: 0.8rem;
-  border-top: 1px solid #ccc; /* Subtle separation from content */
+  font-size: 0.85rem;
+  border-top: 2px solid #E0E0E0; /* Lighter, thicker top border for modern separation */
+  padding-top: 20px; /* Added padding on top for space */
+}
+
+/* Responsive design tweaks */
+@media (max-width: 768px) {
+  .container {
+    width: 95%; /* More width for smaller devices */
+    padding: 20px; /* Adjust padding for space constraints */
+  }
+
+  nav a {
+    display: block; /* Stack navigation links on smaller screens */
+    margin-bottom: 10px; /* Bottom margin for separation */
+  }
+}
+
+/* Form overall styling */
+form {
+  background: #fff; /* Background color for form */
+  padding: 20px; /* Padding inside the form */
+  border-radius: 10px; /* Rounded corners for the form */
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1); /* Subtle shadow for depth */
+  max-width: 400px; /* Limit form width for better aesthetics */
+  margin: 40px auto; /* Center form and give vertical space */
+}
+
+/* Input field styling */
+input[type="text"], input[type="password"] {
+  width: calc(100% - 22px); /* Full width minus padding */
+  padding: 10px; /* Padding inside input fields */
+  margin-top: 8px; /* Margin top for spacing */
+  margin-bottom: 16px; /* Margin bottom for spacing */
+  border: 1px solid #ccc; /* Border color */
+  border-radius: 4px; /* Rounded corners for input fields */
+  display: block; /* Make inputs block level to take full width */
+}
+
+/* Label styling */
+label {
+  display: block; /* Make labels block level */
+  margin-bottom: 5px; /* Space below labels */
+  color: #333; /* Label text color */
+}
+
+/* Button styling */
+button[type="submit"] {
+  background-color: #6C63FF; /* Theme color for buttons */
+  color: white; /* Text color */
+  border: none; /* No border */
+  padding: 10px 20px; /* Padding inside the button */
+  text-transform: uppercase; /* Uppercase text */
+  font-weight: bold; /* Bold font */
+  border-radius: 4px; /* Rounded corners for the button */
+  width: 100%; /* Full width */
+  cursor: pointer; /* Cursor pointer on hover */
+  transition: background-color 0.3s; /* Transition for hover effect */
+}
+
+button[type="submit"]:hover {
+  background-color: #5548c8; /* Darker shade on hover */
+}
+
+/* Responsiveness: Handles smaller screens */
+@media (max-width: 600px) {
+  .container, form {
+    width: 100%; /* Full width on smaller screens */
+    margin: 20px auto; /* Smaller margin on smaller screens */
+    padding: 15px; /* Smaller padding on smaller screens */
+  }
+}
+
+/* Enhance spacing around links for clarity */
+a {
+  padding: 8px 12px; /* Increase padding for better touch targets and separation */
+  margin: 10px 5px; /* Add margins to separate links from surrounding elements */
+  display: inline-block; /* Ensures padding and margin are respected */
+  background-color: #f0f0f0; /* Optional: a subtle background color for visibility */
+  border-radius: 5px; /* Optional: rounded corners for aesthetic purposes */
+}
+
+/* Specific adjustments for main page links */
+.main-links {
+  margin-top: 20px; /* Additional top margin for separation from previous content */
+  display: block; /* Make each link block to prevent overlap */
+}
+
+/* Improved responsive handling */
+@media (max-width: 768px) {
+  a {
+    width: 100%; /* Full width links on smaller screens for easier access */
+    margin: 10px 0; /* Stack links with vertical spacing only */
+  }
 }
