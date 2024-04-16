@@ -98,13 +98,15 @@ def create_post():
     if 'username' not in session:
         return redirect(url_for('login'))
     
-    name = request.form["fname"]
+    name = session['username']
+    item = request.form['item']
     message = request.form["fmessage"]
     user_id = session['user_id']
 
-    doc = {"name": name, "message": message, "created_at": datetime.datetime.utcnow(), "user_id": ObjectId(user_id)}
+    doc = {"name": name, "item" : item,  "message": message, "created_at": datetime.datetime.utcnow(), "user_id": ObjectId(user_id)}
     db.exampleapp.insert_one(doc)
     return redirect(url_for("read"))
+
 
 @app.route("/edit/<mongoid>", methods=["GET", "POST"])
 def edit(mongoid):
@@ -125,12 +127,12 @@ def edit(mongoid):
         return "Unauthorized", 403  # If no document is found, access is unauthorized
 
     if request.method == 'POST':
-        name = request.form["fname"]
+        item = request.form["item"]
         message = request.form["fmessage"]
         # Update the document
         db.exampleapp.update_one(
             {"_id": ObjectId(mongoid)},
-            {"$set": {"name": name, "message": message, "created_at": datetime.datetime.utcnow()}}
+            {"$set": {"item": item, "message": message, "created_at": datetime.datetime.utcnow()}}
         )
         return redirect(url_for("read"))
 
@@ -146,12 +148,12 @@ def edit_post(mongoid):
     Parameters:
     mongoid (str): The MongoDB ObjectId of the record to be edited.
     """
-    name = request.form["fname"]
+    item = request.form["item"]
     message = request.form["fmessage"]
 
     doc = {
         # "_id": ObjectId(mongoid),
-        "name": name,
+        "item": item,
         "message": message,
         "created_at": datetime.datetime.utcnow(),
     }

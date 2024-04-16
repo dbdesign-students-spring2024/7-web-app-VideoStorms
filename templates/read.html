@@ -13,6 +13,7 @@
             <a href="{{ url_for('edit',mongoid=doc._id)}}">Edit</a> | <a href="{{ url_for('delete',mongoid=doc._id)}}">Delete</a>
             <br/>
         </p>
+        <h3>{{ doc.item }}</h3>
         <p>
             {{ doc.message }}
         </p>
