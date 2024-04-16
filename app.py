@@ -3,7 +3,7 @@ import sys
 import subprocess
 import datetime
 from flask_bcrypt import Bcrypt
-
+from flask import session
 
 from flask import Flask, render_template, request, redirect, url_for, make_response
 
@@ -43,6 +43,9 @@ bcrypt = Bcrypt(app)
 
 # # turn on debugging if in development mode
 # app.debug = True if os.getenv("FLASK_ENV", "development") == "development" else False
+
+app.secret_key = os.getenv('SECRET_KEY')  # Ensure you have SECRET_KEY in your .env file
+
 
 # try to connect to the database, and quit if it doesn't work
 try:
@@ -86,43 +89,48 @@ def read():
 
 @app.route("/create")
 def create():
-    """
-    Route for GET requests to the create page.
-    Displays a form users can fill out to create a new document.
-    """
-    return render_template("create.html")  # render the create template
-
+    if 'username' in session:
+        return render_template("create.html")
+    return redirect(url_for('login'))
 
 @app.route("/create", methods=["POST"])
 def create_post():
-    """
-    Route for POST requests to the create page.
-    Accepts the form submission data for a new document and saves the document to the database.
-    """
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    
     name = request.form["fname"]
     message = request.form["fmessage"]
+    user_id = session['user_id']
 
-    # create a new document with the data the user entered
-    doc = {"name": name, "message": message, "created_at": datetime.datetime.utcnow()}
-    db.exampleapp.insert_one(doc)  # insert a new document
+    doc = {"name": name, "message": message, "created_at": datetime.datetime.utcnow(), "user_id": ObjectId(user_id)}
+    db.exampleapp.insert_one(doc)
+    return redirect(url_for("read"))
 
-    return redirect(
-        url_for("read")
-    )  # tell the browser to make a request for the /read route
-
-
-@app.route("/edit/<mongoid>")
+@app.route("/edit/<mongoid>", methods=["GET", "POST"])
 def edit(mongoid):
-    """
-    Route for GET requests to the edit page.
-    Displays a form users can fill out to edit an existing record.
-    Parameters:
-    mongoid (str): The MongoDB ObjectId of the record to be edited.
-    """
-    doc = db.exampleapp.find_one({"_id": ObjectId(mongoid)})
-    return render_template(
-        "edit.html", mongoid=mongoid, doc=doc
-    )  # render the edit template
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    # Find the document either if the user is an admin or is the owner of the document
+    criteria = {"_id": ObjectId(mongoid)}
+    if not session.get('is_admin'):
+        criteria["user_id"] = ObjectId(session['user_id'])
+
+    doc = db.exampleapp.find_one(criteria)
+    if doc is None:
+        return "Unauthorized", 403  # Or handle another way
+
+    if request.method == 'POST':
+        name = request.form["fname"]
+        message = request.form["fmessage"]
+
+        db.exampleapp.update_one(
+            {"_id": ObjectId(mongoid)},
+            {"$set": {"name": name, "message": message, "created_at": datetime.datetime.utcnow()}}
+        )
+        return redirect(url_for("read"))
+
+    return render_template("edit.html", mongoid=mongoid, doc=doc)
 
 
 @app.route("/edit/<mongoid>", methods=["POST"])
@@ -154,16 +162,17 @@ def edit_post(mongoid):
 
 @app.route("/delete/<mongoid>")
 def delete(mongoid):
-    """
-    Route for GET requests to the delete page.
-    Deletes the specified record from the database, and then redirects the browser to the read page.
-    Parameters:
-    mongoid (str): The MongoDB ObjectId of the record to be deleted.
-    """
-    db.exampleapp.delete_one({"_id": ObjectId(mongoid)})
-    return redirect(
-        url_for("read")
-    )  # tell the web browser to make a request for the /read route.
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    criteria = {"_id": ObjectId(mongoid)}
+    if not session.get('is_admin'):
+        criteria["user_id"] = ObjectId(session['user_id'])
+
+    result = db.exampleapp.delete_one(criteria)
+    if result.deleted_count == 0:
+        return "Unauthorized", 403
+    return redirect(url_for("read"))
 
 
 @app.route("/webhook", methods=["POST"])
@@ -224,9 +233,17 @@ def login():
         user = db.users.find_one({"username": username})
 
         if user and bcrypt.check_password_hash(user['password'], password):
-            # Implement your session logic here
-            return redirect(url_for('home'))  # Redirect to home or another secured page
+            session['username'] = username
+            session['user_id'] = str(user['_id'])  # Store user ID from MongoDB in session
+            return redirect(url_for('home'))
         else:
             return 'Invalid username or password'
-
     return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('username', None)  # Remove the username from the session
+    session.pop('user_id', None)  # Remove the user ID from the session
+    return redirect(url_for('home'))
+
+
