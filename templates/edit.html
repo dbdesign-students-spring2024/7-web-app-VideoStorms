@@ -1,13 +1,13 @@
 {% extends 'base.html' %} {% block container %}
 <h2>Update</h2>
-<p>Edit a record in the MongoDB database collection.</p>
+<p>Edit a listing.</p>
 <form method="POST" action="{{ url_for('edit_post', mongoid=mongoid) }}">
   <p>
-    Your name:
+    Item:
     <input type="text" id="fname" name="fname" value="{{doc.name}}" /><br />
   </p>
   <p>
-    Message:
+    Description:
     <textarea id="fmessage" name="fmessage">{{doc.message}}</textarea>
   </p>
   <p>
