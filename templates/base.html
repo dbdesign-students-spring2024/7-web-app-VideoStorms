@@ -14,7 +14,9 @@
         <p>
           <a href="{{ url_for('home')}}">Home</a> |
           <a href="{{ url_for('read')}}">All posts</a> |
-          <a href="{{ url_for('create')}}">Create a post</a>
+          <a href="{{ url_for('create')}}">Create a post</a> |
+          <a href="{{ url_for('login') }}">Log-in</a> |
+          <a href="{{ url_for('register') }}">Register</a> |
         </p>
       </header>
       <main>{% block container %} {% endblock %}</main>

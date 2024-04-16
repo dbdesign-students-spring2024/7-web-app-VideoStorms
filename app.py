@@ -7,6 +7,8 @@ import datetime
 
 from flask import Flask, render_template, request, redirect, url_for, make_response
 
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
+
 # import logging
 import sentry_sdk
 from sentry_sdk.integrations.flask import (
@@ -33,9 +35,7 @@ sentry_sdk.init(
     traces_sample_rate=1.0,
     # Set profiles_sample_rate to 1.0 to profile 100% of sampled transactions.
     # We recommend adjusting this value in production.
-    profiles_sample_rate=1.0,
     integrations=[FlaskIntegration()],
-    traces_sample_rate=1.0,
     send_default_pii=True,
 )
 
@@ -96,20 +96,31 @@ def create():
 
 @app.route("/create", methods=["POST"])
 def create_post():
-    """
-    Route for POST requests to the create page.
-    Accepts the form submission data for a new document and saves the document to the database.
-    """
+    if not current_user.is_authenticated:
+        flash('You must be logged in to post messages.')
+        return redirect(url_for('login'))
+
     name = request.form["fname"]
     message = request.form["fmessage"]
+    user_id = current_user.id
 
-    # create a new document with the data the user entered
-    doc = {"name": name, "message": message, "created_at": datetime.datetime.utcnow()}
-    db.exampleapp.insert_one(doc)  # insert a new document
+    doc = {
+        "name": name,
+        "message": message,
+        "created_at": datetime.datetime.utcnow(),
+        "user_id": user_id
+    }
+    db.exampleapp.insert_one(doc)
+    return redirect(url_for("read"))
 
-    return redirect(
-        url_for("read")
-    )  # tell the browser to make a request for the /read route
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'  # make sure 'login' is the endpoint for your login route
+
+@login_manager.user_loader
+def load_user(user_id):
+    # Your logic to load a user from the database by user_id
+    return User.get(user_id)
+
 
 
 @app.route("/edit/<mongoid>")
@@ -155,19 +166,6 @@ def edit_post(mongoid):
     )  # tell the browser to make a request for the /read route
 
 
-@app.route("/delete/<mongoid>")
-def delete(mongoid):
-    """
-    Route for GET requests to the delete page.
-    Deletes the specified record from the database, and then redirects the browser to the read page.
-
-    Parameters:
-    mongoid (str): The MongoDB ObjectId of the record to be deleted.
-    """
-    db.exampleapp.delete_one({"_id": ObjectId(mongoid)})
-    return redirect(
-        url_for("read")
-    )  # tell the web browser to make a request for the /read route.
 
 
 @app.route("/webhook", methods=["POST"])
@@ -202,3 +200,111 @@ def handle_error(e):
 if __name__ == "__main__":
     # logging.basicConfig(filename="./flask_error.log", level=logging.DEBUG)
     app.run(load_dotenv=True)
+
+
+
+class User(UserMixin):
+    def __init__(self, id):
+        self.id = id
+
+    @staticmethod
+    def validate_login(password_hash, password):
+        return check_password_hash(password_hash, password)
+
+# Flask-Login helper to retrieve a user from our fake database
+@login_manager.user_loader
+def load_user(user_id):
+    return User(user_id)
+
+# Replace with real user lookup logic
+def user_lookup(username):
+    if username == "admin":
+        # Typically this would be a hashed password
+        return User("admin"), "example_hashed_password"
+    return None, None
+
+
+from flask import flash
+from werkzeug.security import check_password_hash
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        user, password_hash = user_lookup(username)
+        if user and User.validate_login(password_hash, password):
+            login_user(user)
+            return redirect(url_for('read'))
+        flash('Invalid username or password')
+    return render_template('login.html')
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('home'))
+
+from flask_login import current_user
+
+
+
+from flask import abort
+
+
+@app.route("/delete/<mongoid>", methods=["POST"])
+@login_required
+def delete_post(mongoid):
+    # Fetch the document to check ownership
+    post = db.exampleapp.find_one({"_id": ObjectId(mongoid)})
+
+    if not post:
+        abort(404, description="Post not found")
+
+    # Check if the current user is the post owner or an admin
+    # Assuming 'is_admin' is a property of the User model that returns True if the user is an admin
+    if current_user.id == post['user_id'] or getattr(current_user, 'is_admin', False):
+        db.exampleapp.delete_one({"_id": ObjectId(mongoid)})
+        return redirect(url_for('read'))
+    else:
+        return "Unauthorized", 403
+
+
+class User(UserMixin):
+    def __init__(self, id, username, is_admin=False):
+        self.id = id
+        self.username = username
+        self.is_admin = is_admin
+
+    @staticmethod
+    def get(user_id):
+        # Logic to retrieve user from the database
+        return User(user_id, username='example', is_admin=False)
+
+from flask import Flask, render_template, request, redirect, url_for, flash
+from flask_pymongo import PyMongo
+from flask_bcrypt import Bcrypt
+from bson.objectid import ObjectId
+
+
+
+app.config["MONGO_URI"] = os.getenv("MONGO_URI")  # Ensure this is the correct URI for your MongoDB
+
+mongo = PyMongo(app)  # This initializes the PyMongo object with your Flask app
+bcrypt = Bcrypt(app)  # Initialize Bcrypt as well for handling password hashing
+
+@app.route("/register", methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        users = mongo.db.users  # Accessing the 'users' collection correctly
+        existing_user = users.find_one({'username': request.form['username']})
+
+        if existing_user is None:
+            hashpass = bcrypt.generate_password_hash(request.form['password']).decode('utf-8')
+            users.insert_one({'username': request.form['username'], 'password': hashpass})
+            flash('Registration successful!', 'success')
+            return redirect(url_for('index'))  # Make sure 'index' is defined in your routes
+        else:
+            flash('Username already exists!', 'danger')
+
+    return render_template('register.html')
